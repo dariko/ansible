@@ -730,12 +730,22 @@ class DockerServiceManager():
     def __init__(self, client):
         self.client = client
 
+    def test_parameter_versions(self):
+        parameters_versions=[
+            {'param': 'dns', 'attribute': 'dns', 'min_version': '1.25'}]
+        params = self.client.module.params
+        empty_service = DockerService()
+        for pv in parameters_versions:
+            if (params[pv['param']] != getattr(empty_service, pv['attribute'])
+                    and LooseVersion(self.client.version()['ApiVersion'])
+                        < LooseVersion(pv['min_version'])):
+                self.client.module.fail_json(
+                    msg='dns parameter supported only with api_version>=%s' % pv['min_version'])
+
     def run(self):
+        self.test_parameter_versions()
+
         module = self.client.module
-        if (self.client.module.params['dns']!=[] and
-                LooseVersion(self.client.version()['ApiVersion'])<LooseVersion('1.25')):
-            self.client.module.fail_json(msg='dns parameter supported only on api_version>=1.25')
-                
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
