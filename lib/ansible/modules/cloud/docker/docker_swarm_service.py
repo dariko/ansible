@@ -217,6 +217,14 @@ options:
     required: false
     default: root
     description: username or UID
+  update_wait:
+    required: false
+    default: false
+    description: Wait for completion on service update.
+  update_wait_timeout:
+    required: false
+    default: 60
+    description: Timeout when waiting for service update.
 requirements:
   - "docker-py >= 2.0"
 '''
@@ -378,6 +386,9 @@ EXAMPLES = '''
 
 from ansible.module_utils.docker_common import *
 from distutils.version import LooseVersion
+from time import sleep
+from datetime import datetime
+import re
 
 try:
     from docker import utils
@@ -793,6 +804,49 @@ class DockerServiceManager():
                           < LooseVersion('1.25'))):
                 self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
 
+    def get_service_started_at(self, service_name):
+        raw_data=self.client.services( filters={'name': service_name} )
+        self.client.module.fail_json(msg=raw_data)
+        if len(raw_data)==0:
+            self.client.module.fail_json(msg='service %s not found when requesting update status'
+                                             % service_name)
+        update_status = raw_data.get('UpdateStatus',None)
+        if update_status is None:
+            return None
+        update_status_started_at = update_status.get('StartedAt',None)
+        if update_status_started_at is None:
+            return none
+        return datetime.strptime(re.sub(r'\.[0-9]*Z', 'Z', update_status_started_at),
+                                 '%Y-%m-%dT%H:%M:%SZ')
+
+    def get_service_update_status(self, service_name):
+        raw_data=self.client.services( filters={'name': service_name} )
+        self.client.module.fail_json(msg=raw_data)
+        if len(raw_data)==0:
+            self.client.module.fail_json(msg='service %s not found when requesting update status'
+                                             % service_name)
+        update_status = raw_data.get('UpdateStatus',None)
+        if update_status is None:
+            return 'not_started'
+        started_at =datetime.strptime(re.sub(r'\.[0-9]*Z', 'Z',
+                                             update_status_started_at),
+                                             '%Y-%m-%dT%H:%M:%SZ')
+        if started_at == datetime(1, 1, 1, 0, 0):
+            return 'not_started'
+        
+
+    def wait_for_service_update(self, service_name, timeout, timeout_pre):
+        status = self.get_service_update_status(service_name)
+        while not status=="completed" and timeout > 0:
+            sleep(1)
+
+            timeout = timeout - 1
+            status = self.get_service_update_status(service_name)
+
+        if status != "completed":
+            self.client.module.fail_json(msg='timeout reached when waiting for service update')
+        return
+
     def run(self):
         self.test_parameter_versions()
 
@@ -835,6 +889,9 @@ class DockerServiceManager():
                     else:
                         if not module.check_mode:
                             self.update_service(module.params['name'],current_service,new_service)
+                        if module.params['update_wait']:
+                            self.wait_for_service_update(module.params['name'],
+                                                         module.params['update_wait_timeout'])
                         msg     = 'Service updated'
                         rebuilt = False
                         changes = changes
@@ -883,7 +940,9 @@ def main():
         restart_policy_delay    = dict( default=0, type='int' ),
         restart_policy_attempts = dict( default=0, type='int' ),
         restart_policy_window   = dict( default=0, type='int' ),
-        user                    = dict( default='root' ))
+        user                    = dict( default='root' ),
+        update_wait             = dict( default=False, type='bool' ),
+        update_wait_timeout     = dict( default=60, type='int' ))
     required_if = [
         ('state', 'present', [
          'image',])]
