@@ -503,7 +503,7 @@ class DockerService(DockerBaseClass):
       differences.append('restart_policy_delay')
     if self.restart_policy_window!=os.restart_policy_window:
       differences.append('restart_policy_window')
-    if self.image!=os.image:
+    if self.image!=os.image.split('@')[0]:
       differences.append('image')
     if self.user!=os.user:
       differences.append('user')
@@ -629,8 +629,8 @@ class DockerServiceManager():
         for port in raw_data_endpoint_spec.get('Ports',[]):
           ds.publish.append({
             'protocol': port['Protocol'],
-            'published_port': str(port['PublishedPort']),
-            'target_port': str(port['TargetPort'])
+            'published_port': int(port['PublishedPort']),
+            'target_port': int(port['TargetPort'])
           })
 
     if 'Resources' in task_template_data.keys():
