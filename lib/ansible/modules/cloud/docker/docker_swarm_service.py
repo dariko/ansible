@@ -23,9 +23,9 @@ options:
     description:
     - Service name
   image:
-    required: true
+    required: false
     description:
-    - Service image path and tag.
+    - Service image path and tag, required if c(state==present)
       Maps docker service IMAGE parameter.
   state:
     required: true
@@ -532,7 +532,7 @@ class DockerService(DockerBaseClass):
             'env': self.env,
             'force_update': self.force_update,
             'log_driver': self.log_driver,
-            'log_driver_options ': self.log_driver_options,
+            'log_driver_options': self.log_driver_options,
             'publish': self.publish,
             'constraints': self.constraints,
             'labels': self.labels,
