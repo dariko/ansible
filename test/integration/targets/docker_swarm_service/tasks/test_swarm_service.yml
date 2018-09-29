@@ -118,10 +118,13 @@
     - output is success
     - output is not changed
 
+- name: Force create new swarm
+  docker_swarm:
+    state: present
+    force: true
+    advertise_addr: "{{ansible_default_ipv4.address}}"
+
 - name: Remove a Swarm cluster
-  retries: 5
-  until: output is succeeded
-  register: output
   docker_swarm:
     state: absent
     force: true
