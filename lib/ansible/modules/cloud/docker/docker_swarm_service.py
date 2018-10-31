@@ -473,6 +473,7 @@ except Exception as dummy:
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
+        self.debug = []
         self.constraints = []
         self.image = ""
         self.args = []
@@ -605,6 +606,7 @@ class DockerService(DockerBaseClass):
 
         s.publish = []
         for param_p in ap['publish']:
+            s.debug.append("publish loop in: %s" % param_p)
             service_p = {}
             service_p['protocol'] = param_p.get('protocol', 'tcp')
             service_p['mode'] = param_p.get('mode', None)
@@ -616,6 +618,7 @@ class DockerService(DockerBaseClass):
             if service_p['mode'] not in [None, 'ingress', 'host']:
                 raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
                                  service_p['mode'])
+            s.debug.append("publish loop out: %s" % service_p)
             s.publish.append(service_p)
         s.mounts = []
         for param_m in ap['mounts']:
@@ -1110,7 +1113,7 @@ class DockerServiceManager():
                 if not module.check_mode:
                     service_id = self.create_service(module.params['name'],
                                                      new_service)
-                msg = 'Service created'
+                msg = new_service.debug
                 changed = True
                 facts = new_service.get_facts()
 
