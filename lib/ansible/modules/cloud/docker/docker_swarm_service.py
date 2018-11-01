@@ -1010,6 +1010,7 @@ class DockerServiceManager():
     def create_service(self, name, service):
         update_policy, task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(
             name, self.get_networks_names_ids())
+        self.debug.append('create_service endpoint_spec param: %s' % endpoint_spec)
         self.client.create_service(
             name=name,
             endpoint_spec=endpoint_spec,
@@ -1024,6 +1025,7 @@ class DockerServiceManager():
 
     def __init__(self, client):
         self.client = client
+        self.debug = []
 
     def test_parameter_versions(self):
         parameters_versions = [
@@ -1115,7 +1117,7 @@ class DockerServiceManager():
                 if not module.check_mode:
                     service_id = self.create_service(module.params['name'],
                                                      new_service)
-                msg = new_service.debug
+                msg = new_service.debug + self.debug
                 changed = True
                 facts = new_service.get_facts()
 
