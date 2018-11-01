@@ -606,7 +606,7 @@ class DockerService(DockerBaseClass):
 
         s.publish = []
         for param_p in ap['publish']:
-            s.debug.append("publish loop in: %s" % param_p)
+            s.debug.append("from_ansible_params publish loop in: %s" % param_p)
             service_p = {}
             service_p['protocol'] = param_p.get('protocol', 'tcp')
             service_p['mode'] = param_p.get('mode', None)
@@ -618,7 +618,7 @@ class DockerService(DockerBaseClass):
             if service_p['mode'] not in [None, 'ingress', 'host']:
                 raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
                                  service_p['mode'])
-            s.debug.append("publish loop out: %s" % service_p)
+            s.debug.append("from_ansible_params publish loop out: %s" % service_p)
             s.publish.append(service_p)
         s.mounts = []
         for param_m in ap['mounts']:
@@ -853,11 +853,13 @@ class DockerService(DockerBaseClass):
 
         ports = {}
         for port in self.publish:
+            self.debug.append("generate_docker_py_service_description port loop in: %s" % port)
             if port['mode']:
                 ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
             else:
                 ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'])
         endpoint_spec = types.EndpointSpec(mode=self.endpoint_mode, ports=ports)
+        self.debug.append("generate_docker_py_service_description endpoint_spec: %s" % endpoint_spec)
         return update_policy, task_template, networks, endpoint_spec, mode, self.labels
 
     # def fail(self, msg):
