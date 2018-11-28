@@ -694,7 +694,7 @@ class DockerService(DockerBaseClass):
             differences.append('reserve_memory')
         if self.container_labels != os.container_labels:
             differences.append('container_labels')
-        if self.publish != os.publish:
+        if self.publish and self.publish != os.publish:
             differences.append('publish')
         if self.restart_policy != os.restart_policy:
             differences.append('restart_policy')
@@ -714,11 +714,11 @@ class DockerService(DockerBaseClass):
             differences.append('update_monitor')
         if self.update_max_failure_ratio != os.update_max_failure_ratio:
             differences.append('update_max_failure_ratio')
-        if self.update_order != os.update_order:
+        if self.update_order and self.update_order != os.update_order:
             differences.append('update_order')
         if self.image != os.image.split('@')[0]:
             differences.append('image')
-        if self.user != os.user:
+        if self.user and self.user != os.user:
             differences.append('user')
         if self.dns != os.dns:
             differences.append('dns')
